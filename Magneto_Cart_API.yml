@@ -1,0 +1,262 @@
+openapi: 3.0.0
+info:
+  title: Magneto Cart API
+  description: >-
+    # **Overview: Magento Shopping Cart API Automation Module**
+
+
+    This Postman collection automates and validates the end-to-end workflow for
+    managing a customer’s shopping cart on the
+    [magento.softwaretestingboard.com](https://magento.softwaretestingboard.com/)
+    demo site using Magento 2 REST APIs. The module covers all key cart
+    operations, including customer authentication, cart creation, product
+    addition, item updates, and item deletion. It leverages Postman’s variable
+    chaining and scripting capabilities for dynamic data handling and seamless
+    request sequencing.
+
+
+    ### **Key Features:**
+
+
+    - **Authentication:** Secure customer login and token management.
+        
+    - **Cart Management:** Automated creation and retrieval of customer carts.
+        
+    - **Product Handling:** Adding, updating, and deleting items in the cart
+    using live SKU data.
+        
+    - **Dynamic Variable Chaining:** Uses Postman variables to pass data (such
+    as tokens, cart IDs, item IDs) between requests for a fully automated
+    workflow.
+        
+    - **Error Handling & Validation:** Includes tests to verify API responses,
+    validate data integrity, and handle common error scenarios.
+        
+    - **Environment Flexibility:** Supports environment variables for easy
+    switching between different Magento instances or test users.
+        
+
+    ### **Use Cases:**
+
+
+    - API regression testing for cart functionality.
+        
+    - Demoing Magento 2 cart API capabilities.
+        
+    - Rapid prototyping and troubleshooting of cart-related workflows.
+        
+
+    ### **How to Use:**
+
+
+    1. Import the collection and associated environment JSON into Postman.
+        
+    2. Configure environment variables (such as `baseurl`, test user
+    credentials).
+        
+    3. Run the collection in sequence using the Collection Runner.
+        
+    4. Review test results and API responses for validation.
+        
+
+    ---
+
+
+    **This module streamlines testing and development of Magento cart features,
+    ensuring reliable and repeatable API interactions.**
+  version: 1.0.0
+servers:
+  - url: http://{{baseurl}}customers
+  - url: http://{{baseurl}}integration
+  - url: http://{{baseurl}}carts
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+paths:
+  /:
+    post:
+      tags:
+        - default
+      summary: Create Customer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                customer:
+                  email: '{{test_email}}'
+                  firstname: '{{test_fname}}'
+                  lastname: '{{test_lname}}'
+                  addresses:
+                    - defaultShipping: true
+                      defaultBilling: true
+                      firstname: '{{test_fname}}'
+                      lastname: '{{test_lname}}'
+                      region:
+                        regionCode: NY
+                        region: New York
+                        regionId: 43
+                      postcode: '10755'
+                      street:
+                        - 123 Oak Ave
+                      city: Purchase
+                      telephone: 512-555-1111
+                      countryId: US
+                password: '{{test_password}}'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /customer/token/:
+    post:
+      tags:
+        - default
+      summary: Generate Customer Token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                username: '{{test_email}}'
+                password: '{{test_password}}'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /{customer_Id}:
+    get:
+      tags:
+        - default
+      summary: Get Customer (using ID)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: customer_Id
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /me:
+    get:
+      tags:
+        - default
+      summary: Get Customer (using Token)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /mine:
+    post:
+      tags:
+        - default
+      summary: Create Cart
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              type: string
+              example: '""'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /mine/items:
+    get:
+      tags:
+        - default
+      summary: Get Cart contents
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - default
+      summary: Add Cart item
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                cartItem:
+                  sku: '{{sku_id}}'
+                  qty: 2
+                  quote_id: '{{cart_id}}'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /mine/items/{item_id}:
+    put:
+      tags:
+        - default
+      summary: Update Cart item
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                cartItem:
+                  item_id: '{{item_id}}'
+                  sku: '{{sku_id}}'
+                  qty: 1
+                  quote_id: '{{cart_id}}'
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - default
+      summary: Delete Cart item
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
