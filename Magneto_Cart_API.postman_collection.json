@@ -1,0 +1,649 @@
+{
+	"info": {
+		"_postman_id": "2271e9c6-7c65-4070-9756-c2fd3623871f",
+		"name": "Magneto_Cart_API",
+		"description": "# **Overview: Magento Shopping Cart API Automation Module**\n\nThis Postman collection automates and validates the end-to-end workflow for managing a customer’s shopping cart on the [magento.softwaretestingboard.com](https://magento.softwaretestingboard.com/) demo site using Magento 2 REST APIs. The module covers all key cart operations, including customer authentication, cart creation, product addition, item updates, and item deletion. It leverages Postman’s variable chaining and scripting capabilities for dynamic data handling and seamless request sequencing.\n\n### **Key Features:**\n\n- **Authentication:** Secure customer login and token management.\n    \n- **Cart Management:** Automated creation and retrieval of customer carts.\n    \n- **Product Handling:** Adding, updating, and deleting items in the cart using live SKU data.\n    \n- **Dynamic Variable Chaining:** Uses Postman variables to pass data (such as tokens, cart IDs, item IDs) between requests for a fully automated workflow.\n    \n- **Error Handling & Validation:** Includes tests to verify API responses, validate data integrity, and handle common error scenarios.\n    \n- **Environment Flexibility:** Supports environment variables for easy switching between different Magento instances or test users.\n    \n\n### **Use Cases:**\n\n- API regression testing for cart functionality.\n    \n- Demoing Magento 2 cart API capabilities.\n    \n- Rapid prototyping and troubleshooting of cart-related workflows.\n    \n\n### **How to Use:**\n\n1. Import the collection and associated environment JSON into Postman.\n    \n2. Configure environment variables (such as `baseurl`, test user credentials).\n    \n3. Run the collection in sequence using the Collection Runner.\n    \n4. Review test results and API responses for validation.\n    \n\nStartFragment\n\n## **Explore Interactive API Documentation**\n\nFor an interactive, user-friendly experience, you can also explore the full Magento Shopping Cart API documentation hosted as a **Swagger UI web page** on GitHub Pages. This live documentation provides detailed endpoint information, request/response examples, and the ability to try out API calls directly from your browser.\n\n**Access the Swagger UI here:**\n\n[https://naveenkumarqa.github.io/magneto-cart-api-doc-static/](https://naveenkumarqa.github.io/magneto-cart-api-doc-static/)\n\n---\n\n**This module streamlines testing and development of Magento cart features, ensuring reliable and repeatable API interactions.**",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "37113943"
+	},
+	"item": [
+		{
+			"name": "Create Customer",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let timestamp = Date.now();\r",
+							"let email = \"testuser\"+timestamp+\"@example.com\";\r",
+							"let fname = \"Test\" + timestamp;\r",
+							"let lname = \"User\" + timestamp;\r",
+							"\r",
+							"pm.collectionVariables.set(\"test_fname\", fname);\r",
+							"pm.collectionVariables.set(\"test_lname\", lname);    \r",
+							"pm.collectionVariables.set(\"test_email\", email);\r",
+							"pm.collectionVariables.set(\"test_password\", \"Test@123\");"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200 or 201\", function() {\r",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response has customer id\", function () {\r",
+							"    pm.response.to.have.jsonBody('id');\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Email matches request\", function () {\r",
+							"    var jsonBody = pm.response.json();\r",
+							"    pm.expect(jsonBody.email).to.eql(pm.collectionVariables.get(\"test_email\"));\r",
+							"});\r",
+							"\r",
+							"let customerId = pm.response.json().id;\r",
+							"pm.collectionVariables.set(\"customer_Id\", customerId);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{auth_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"customer\": {\r\n    \"email\": \"{{test_email}}\",\r\n    \"firstname\": \"{{test_fname}}\",\r\n    \"lastname\": \"{{test_lname}}\",\r\n    \"addresses\": [{\r\n      \"defaultShipping\": true,\r\n      \"defaultBilling\": true,\r\n      \"firstname\": \"{{test_fname}}\",\r\n      \"lastname\": \"{{test_lname}}\",\r\n      \"region\": {\r\n        \"regionCode\": \"NY\",\r\n        \"region\": \"New York\",\r\n        \"regionId\": 43\r\n      },\r\n      \"postcode\": \"10755\",\r\n      \"street\": [\"123 Oak Ave\"],\r\n      \"city\": \"Purchase\",\r\n      \"telephone\": \"512-555-1111\",\r\n      \"countryId\": \"US\"\r\n    }]\r\n  },\r\n  \"password\": \"{{test_password}}\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseurl}}customers",
+					"host": [
+						"{{baseurl}}customers"
+					]
+				},
+				"description": "Create a Customer Account"
+			},
+			"response": []
+		},
+		{
+			"name": "Generate Customer Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () { \r",
+							"    pm.response.to.have.status(200);        \r",
+							"}); \r",
+							"\r",
+							"\r",
+							"pm.test(\"Set the customer token\", function () {    \r",
+							"    var jsonData = pm.response.json();  \r",
+							"    pm.collectionVariables.set(\"customer_token\", jsonData);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{auth_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"{{test_email}}\",\r\n    \"password\": \"{{test_password}}\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseurl}}integration/customer/token/",
+					"host": [
+						"{{baseurl}}integration"
+					],
+					"path": [
+						"customer",
+						"token",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Customer (using ID)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							" const jsonData = pm.response.json();\r",
+							" \r",
+							"pm.test(\"Verify customer ID\", function () {\r",
+							"    const customerId = pm.collectionVariables.get(\"customer_Id\");\r",
+							"    console.log(\"Using customer_Id:\", customerId);\r",
+							"    pm.expect(jsonData.id).to.eql(Number(customerId));\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify customer email\", function () {\r",
+							"    pm.expect(jsonData).to.have.property('email');\r",
+							"    if (typeof jsonData.email === \"string\") {\r",
+							"        pm.expect(jsonData.email).to.include(\"example.com\");\r",
+							"    }\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{auth_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{baseurl}}customers/{{customer_Id}}",
+					"host": [
+						"{{baseurl}}customers"
+					],
+					"path": [
+						"{{customer_Id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Customer (using Token)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Check the customer email\", function () {\r",
+							"    var response = pm.response.json();   \r",
+							"    pm.expect(pm.response.json().email).to.eql\r",
+							"                (pm.collectionVariables.get(\"test_email\"));\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{customer_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{baseurl}}customers/me",
+					"host": [
+						"{{baseurl}}customers"
+					],
+					"path": [
+						"me"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Cart",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Cart ID is integer\", function () {\r",
+							"    pm.expect(Number.isInteger(pm.response.json())).to.be.true;\r",
+							"});\r",
+							"\r",
+							"const cartId = pm.response.json();\r",
+							"pm.test(\"Cart ID is present and is an integer\", function () {\r",
+							"    pm.expect(cartId).to.be.a(\"number\");\r",
+							"    pm.expect(cartId).to.be.above(0); \r",
+							"});\r",
+							"\r",
+							"pm.collectionVariables.set(\"cart_id\", cartId);\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{customer_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{baseurl}}carts/mine",
+					"host": [
+						"{{baseurl}}carts"
+					],
+					"path": [
+						"mine"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Cart contents",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Cart is empty\", function () {\r",
+							"    var items = pm.response.json();\r",
+							"    pm.expect(items).to.be.an('array');\r",
+							"    pm.expect(items.length).to.eql(0);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{customer_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{baseurl}}carts/mine/items",
+					"host": [
+						"{{baseurl}}carts"
+					],
+					"path": [
+						"mine",
+						"items"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Cart item",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"pm.collectionVariables.set(\"sku_id\",\"24-MB01\");"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const jsonData = pm.response.json();\r",
+							"pm.test(\"Check correct SKU ID\", function() {\r",
+							"    pm.expect(jsonData.sku).to.eql(pm.collectionVariables.get(\"sku_id\")); \r",
+							"});\r",
+							"\r",
+							"pm.test(\"Check item id is generated or not\", function() {\r",
+							"    pm.expect(jsonData.item_id).to.not.eql(null);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Check correct item name\", function () {\r",
+							"    pm.expect(jsonData.name).to.eql(\"Joust Duffle Bag\");\r",
+							"});\r",
+							"\r",
+							"pm.collectionVariables.set(\"item_id\", jsonData.item_id);    "
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{customer_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"cartItem\": {\r\n        \"sku\": \"{{sku_id}}\",\r\n        \"qty\": 2,\r\n        \"quote_id\": \"{{cart_id}}\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseurl}}carts/mine/items",
+					"host": [
+						"{{baseurl}}carts"
+					],
+					"path": [
+						"mine",
+						"items"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Cart item",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200 or 201\", function () {\r",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+							"});\r",
+							"\r",
+							"const jsonData = pm.response.json(); \r",
+							"pm.test(\"Cart item added with correct SKU\", function () {\r",
+							"    pm.expect(jsonData.sku).to.eql(pm.collectionVariables.get(\"sku_id\"));\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Check correct item id\", function() {\r",
+							"    pm.expect(jsonData.item_id).to.eql(pm.collectionVariables.get(\"item_id\"));\r",
+							"})"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{customer_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"cartItem\": {\r\n        \"item_id\": \"{{item_id}}\",\r\n        \"sku\": \"{{sku_id}}\",\r\n        \"qty\": 1,  // updated to 1\r\n        \"quote_id\": \"{{cart_id}}\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseurl}}carts/mine/items/{{item_id}}",
+					"host": [
+						"{{baseurl}}carts"
+					],
+					"path": [
+						"mine",
+						"items",
+						"{{item_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Cart item",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"//unset all collection variables\r",
+							"/* pm.collectionVariables.unset(\"test_email\");\r",
+							"pm.collectionVariables.unset(\"test_fname\");\r",
+							"pm.collectionVariables.unset(\"test_lname\");\r",
+							"pm.collectionVariables.unset(\"test_password\");\r",
+							"pm.collectionVariables.unset(\"customer_token\");\r",
+							"pm.collectionVariables.unset(\"customer_id\");\r",
+							"pm.collectionVariables.unset(\"cart_id\");\r",
+							"pm.collectionVariables.unset(\"sku_id\");\r",
+							"pm.collectionVariables.unset(\"item_id\");\r",
+							"*/"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{customer_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{baseurl}}carts/mine/items/{{item_id}}",
+					"host": [
+						"{{baseurl}}carts"
+					],
+					"path": [
+						"mine",
+						"items",
+						"{{item_id}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseurl",
+			"value": "https://magento.softwaretestingboard.com/rest/default/V1/",
+			"type": "string"
+		},
+		{
+			"key": "test_fname",
+			"value": ""
+		},
+		{
+			"key": "test_lname",
+			"value": ""
+		},
+		{
+			"key": "test_email",
+			"value": ""
+		},
+		{
+			"key": "test_password",
+			"value": ""
+		},
+		{
+			"key": "customer_Id",
+			"value": ""
+		},
+		{
+			"key": "customer_token",
+			"value": ""
+		},
+		{
+			"key": "cart_id",
+			"value": ""
+		},
+		{
+			"key": "sku_id",
+			"value": ""
+		},
+		{
+			"key": "item_id",
+			"value": ""
+		},
+		{
+			"key": "auth_token",
+			"value": "cdxf96vcah8pbivc3zzrshd8t15ikua5",
+			"type": "default"
+		}
+	]
+}
